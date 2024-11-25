@@ -102,9 +102,7 @@ def update_reservation_users(
     reservation_svc: ReservationService = Depends(),
 ):
     """Update the list of users for a reservation."""
-    print(
-        f"API handler called for reservation_id: {reservation_id}, user_ids: {request.user_ids}"
-    )
+
     return reservation_svc.update_users_for_reservation(
         reservation_id, request.user_ids
     )
