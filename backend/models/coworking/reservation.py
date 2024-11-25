@@ -5,6 +5,7 @@ from ...models.user import User, UserIdentity
 from ..room import Room, RoomPartial
 from .seat import Seat, SeatIdentity
 from .time_range import TimeRange
+from typing import List
 
 __authors__ = ["Kris Jordan, Yuvraj Jain"]
 __copyright__ = "Copyright 2024"
@@ -70,3 +71,7 @@ class ReservationDetails(Reservation):
     extendable: bool = False
     extendable_at: datetime | None
     extendable_until: datetime | None
+
+
+class UpdateUsersRequest(BaseModel):
+    user_ids: List[int]

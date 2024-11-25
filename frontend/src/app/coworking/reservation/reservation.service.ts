@@ -83,4 +83,13 @@ export class ReservationService {
       .get<ReservationJSON>(`/api/coworking/reservation/${id}`)
       .pipe(map(parseReservationJSON));
   }
+
+  updateReservationUsers(reservationId: number, userIds: number[]) {
+    let endpoint = `/api/coworking/reservation/${reservationId}/update-users`;
+    let payload = { user_ids: userIds };
+    console.log('Calling API:', endpoint, 'with payload:', payload);
+    return this.http
+      .put<ReservationJSON>(endpoint, payload)
+      .pipe(map(parseReservationJSON));
+  }
 }

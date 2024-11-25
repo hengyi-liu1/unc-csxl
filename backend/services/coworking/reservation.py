@@ -4,9 +4,10 @@ from fastapi import Depends
 from datetime import datetime, timedelta
 from random import random
 from typing import Sequence
-from sqlalchemy import or_, and_
+from sqlalchemy import or_, and_, delete, insert
 from sqlalchemy.orm import Session, joinedload
 from backend.entities.room_entity import RoomEntity
+
 
 from backend.models.room_details import RoomDetails
 from ...database import db_session
@@ -27,6 +28,7 @@ from ...models.coworking import (
 )
 from ...entities import UserEntity
 from ...entities.coworking import ReservationEntity, SeatEntity
+from ...entities.coworking.reservation_user_table import reservation_user_table
 from .seat import SeatService
 from .policy import PolicyService
 from .operating_hours import OperatingHoursService
@@ -1188,3 +1190,38 @@ class ReservationService:
             )
             .all()
         )
+
+    def update_users_for_reservation(
+        self, reservation_id: int, user_ids: list[int]
+    ) -> Reservation:
+        reservation: ReservationEntity | None = self._session.get(
+            ReservationEntity, reservation_id
+        )
+        if not reservation:
+            raise ResourceNotFoundException(
+                f"No reservation with ID {reservation_id} found."
+            )
+
+        new_users = (
+            self._session.query(UserEntity).filter(UserEntity.id.in_(user_ids)).all()
+        )
+
+        if len(new_users) != len(user_ids):
+            missing_ids = set(user_ids) - {user.id for user in new_users}
+            raise ResourceNotFoundException(
+                f"One or more users not found. Missing IDs: {missing_ids}"
+            )
+
+        self._session.execute(
+            delete(reservation_user_table).where(
+                reservation_user_table.c.reservation_id == reservation_id
+            )
+        )
+
+        new_user_mappings = [
+            {"reservation_id": reservation_id, "user_id": user.id} for user in new_users
+        ]
+
+        self._session.execute(insert(reservation_user_table), new_user_mappings)
+        self._session.commit()
+        return reservation.to_model()

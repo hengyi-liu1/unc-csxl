@@ -2,7 +2,7 @@
 
 This API is used to make and manage reservations."""
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Body
 from typing import Sequence
 from datetime import datetime
 
@@ -15,8 +15,10 @@ from ...models.coworking import (
     ReservationRequest,
     ReservationPartial,
     ReservationState,
-    ReservationMapDetails
+    ReservationMapDetails,
 )
+from ...models.coworking.reservation import UpdateUsersRequest
+from ...services.user import UserService
 
 __authors__ = ["Kris Jordan, Yuvraj Jain"]
 __copyright__ = "Copyright 2023"
@@ -91,3 +93,18 @@ def get_total_hours_study_room_reservations(
 ) -> str:
     """Allows a user to know how many hours they have reserved in all study rooms (Excludes CSXL)."""
     return reservation_svc.get_total_time_user_reservations(subject)
+
+
+@api.put("/reservation/{reservation_id}/update-users", tags=["Coworking"])
+def update_reservation_users(
+    reservation_id: int,
+    request: UpdateUsersRequest,
+    reservation_svc: ReservationService = Depends(),
+):
+    """Update the list of users for a reservation."""
+    print(
+        f"API handler called for reservation_id: {reservation_id}, user_ids: {request.user_ids}"
+    )
+    return reservation_svc.update_users_for_reservation(
+        reservation_id, request.user_ids
+    )

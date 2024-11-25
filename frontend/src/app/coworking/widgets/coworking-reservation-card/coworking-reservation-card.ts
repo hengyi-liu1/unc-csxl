@@ -11,6 +11,9 @@ import { Router } from '@angular/router';
 import { RoomReservationService } from '../../room-reservation/room-reservation.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { CoworkingService } from '../../coworking.service';
+import { PublicProfile } from 'src/app/profile/profile.service';
+import { ActivatedRoute } from '@angular/router';
+import { Profile } from 'src/app/models.module';
 
 @Component({
   selector: 'coworking-reservation-card',
@@ -24,11 +27,15 @@ export class CoworkingReservationCard implements OnInit {
   @Output() isConfirmed = new EventEmitter<boolean>();
   @Output() updateActiveReservation = new EventEmitter<void>();
   @Output() reloadCoworkingHome = new EventEmitter<void>();
+  reservationUsers: PublicProfile[] = [];
+  displayedUsers: Profile[] = [];
+  loggedInUser!: Profile;
 
   public draftConfirmationDeadline$!: Observable<string>;
   isCancelExpanded$: Observable<boolean>;
 
   constructor(
+    private route: ActivatedRoute,
     public router: Router,
     public roomReservationService: RoomReservationService,
     protected snackBar: MatSnackBar,
@@ -48,6 +55,16 @@ export class CoworkingReservationCard implements OnInit {
    */
   ngOnInit(): void {
     this.draftConfirmationDeadline$ = this.initDraftConfirmationDeadline();
+    const data = this.route.snapshot.data as { profile: Profile };
+    this.loggedInUser = data.profile;
+    this.roomReservationService
+      .getReservationObservable(this.reservation.id)
+      .subscribe({
+        next: (reservation) => {
+          this.displayedUsers = reservation.users;
+        },
+        error: (err) => console.error('Error fetching reservation:', err)
+      });
   }
 
   checkinDeadline(reservationStart: Date, reservationEnd: Date): Date {
@@ -120,6 +137,34 @@ export class CoworkingReservationCard implements OnInit {
         );
       }
     });
+  }
+
+  onUsersChanged(updatedUsers: PublicProfile[]): void {
+    if (!updatedUsers.some((user) => user.id === this.loggedInUser.id)) {
+      updatedUsers.push({
+        id: this.loggedInUser.id!,
+        onyen: this.loggedInUser.onyen,
+        first_name: this.loggedInUser.first_name!,
+        last_name: this.loggedInUser.last_name!,
+        pronouns: this.loggedInUser.pronouns!,
+        email: this.loggedInUser.email!,
+        github_avatar: this.loggedInUser.github_avatar,
+        github: this.loggedInUser.github,
+        bio: this.loggedInUser.bio,
+        linkedin: this.loggedInUser.linkedin,
+        website: this.loggedInUser.website
+      });
+    }
+    this.reservationUsers = updatedUsers;
+    const userIds = this.reservationUsers.map((user) => user.id);
+    this.roomReservationService
+      .updateReservationUsers(this.reservation.id, userIds)
+      .subscribe({
+        next: (reservation) => {
+          this.displayedUsers = reservation.users;
+        },
+        error: (err) => console.error('Error fetching reservation:', err)
+      });
   }
 
   private initDraftConfirmationDeadline(): Observable<string> {

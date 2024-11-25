@@ -12,6 +12,8 @@ import { isAuthenticated } from 'src/app/gate/gate.guard';
 import { profileResolver } from 'src/app/profile/profile.resolver';
 import { Reservation } from '../../coworking.models';
 import { RoomReservationService } from '../room-reservation.service';
+import { Profile } from 'src/app/models.module';
+import { FormControl } from '@angular/forms';
 
 @Component({
   selector: 'app-confirm-reservation',
@@ -71,5 +73,19 @@ export class ConfirmReservationComponent implements OnInit, OnDestroy {
 
   setConfirmation(isConfirmed: boolean) {
     this.isConfirmed = isConfirmed;
+  }
+
+  updateReservation() {
+    this.roomReservationService.getReservationObservable(this.id).subscribe({
+      next: (response) => {
+        this.reservation = response;
+      },
+      error: (error) => {
+        console.error('Error fetching updated reservation:', error);
+        this.snackBar.open('Failed to update reservation.', '', {
+          duration: 4000
+        });
+      }
+    });
   }
 }

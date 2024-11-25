@@ -91,6 +91,7 @@ export class UserLookup implements OnInit {
     this.usersInput.nativeElement.value = '';
     this.userLookup.setValue('');
     this.usersChanged.emit(this.users);
+    console.log('Emitting usersChanged event:', this.users);
   }
 
   /** Handler for selecting an option in the who chip grid. */
