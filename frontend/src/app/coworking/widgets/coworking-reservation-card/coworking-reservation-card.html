@@ -36,12 +36,14 @@
 
   <mat-card-content>
     <div class="reservation-users">
-      <h4>Users in this Reservation:</h4>
+      <mat-card-title>Members in Reservation:</mat-card-title>
       <ul *ngIf="(displayedUsers)?.length; else noUsers">
         <li *ngFor="let user of displayedUsers">
           <img
-            alt="{{ user.first_name + ' ' + user.last_name }}"
-            class="user-avatar" />
+            class="user-image"
+            *ngIf="user.github_avatar"
+            matChipAvatar
+            [src]="user.github_avatar" />
           {{ user.first_name }} {{ user.last_name }} ({{ user.email }})
         </li>
       </ul>
