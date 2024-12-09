@@ -27,7 +27,11 @@ export class ReservationService {
 
   cancel(reservation: Reservation) {
     let endpoint = `/api/coworking/reservation/${reservation.id}`;
-    let payload = { id: reservation.id, state: 'CANCELLED' };
+    let payload = {
+      id: reservation.id,
+      state: reservation.state == 'EDIT' ? 'CONFIRMED' : 'CANCELLED'
+    };
+    console.log("Cancel Payload: ", payload)
     return this.http.put<ReservationJSON>(endpoint, payload).pipe(
       map(parseReservationJSON),
       tap((reservation) => {
@@ -38,7 +42,21 @@ export class ReservationService {
 
   confirm(reservation: Reservation) {
     let endpoint = `/api/coworking/reservation/${reservation.id}`;
-    let payload = { id: reservation.id, state: 'CONFIRMED' };
+    let payload =
+      reservation.state === 'EDIT'
+        ? { id: reservation.id, state: 'CONFIRMED', users: reservation.users }
+        : { id: reservation.id, state: 'CONFIRMED' };
+    return this.http.put<ReservationJSON>(endpoint, payload).pipe(
+      map(parseReservationJSON),
+      tap((reservation) => {
+        this.reservationSignal.set(reservation);
+      })
+    );
+  }
+
+  edit(reservation: Reservation) {
+    let endpoint = `/api/coworking/reservation/${reservation.id}`;
+    let payload = { id: reservation.id, state: 'EDIT' };
     return this.http.put<ReservationJSON>(endpoint, payload).pipe(
       map(parseReservationJSON),
       tap((reservation) => {

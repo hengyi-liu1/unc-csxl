@@ -215,6 +215,7 @@ export class ReservationTableService {
 
     return {
       users: [this.profile!],
+      host_id: this.profile!.id!,
       seats: [],
       room: { id: selectedRoom!.room },
       start: startDateTime,

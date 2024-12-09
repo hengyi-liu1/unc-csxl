@@ -56,6 +56,7 @@ def instantiate_global_models(time: dict[str, datetime]):
         room=None,
         state=ReservationState.CHECKED_IN,
         users=[user_data.user],
+        host_id=user_data.user.id,
         seats=[seat_data.monitor_seat_00],
     )
 
@@ -70,6 +71,7 @@ def instantiate_global_models(time: dict[str, datetime]):
         room=None,
         state=ReservationState.CHECKED_OUT,
         users=[user_data.ambassador],
+        host_id=user_data.ambassador.id,
         seats=[seat_data.monitor_seat_01],
     )
 
@@ -84,6 +86,7 @@ def instantiate_global_models(time: dict[str, datetime]):
         room=None,
         state=ReservationState.CANCELLED,
         users=[user_data.root],
+        host_id=user_data.root.id,
         seats=[seat_data.monitor_seat_10],
     )
 
@@ -98,6 +101,7 @@ def instantiate_global_models(time: dict[str, datetime]):
         room=None,
         state=ReservationState.CONFIRMED,
         users=[user_data.root, user_data.ambassador],
+        host_id=user_data.root.id,
         seats=[seat_data.reservable_seats[0], seat_data.reservable_seats[1]],
     )
 
@@ -112,6 +116,7 @@ def instantiate_global_models(time: dict[str, datetime]):
         room=None,
         state=ReservationState.DRAFT,
         users=[user_data.user],
+        host_id=user_data.user.id,
         seats=[seat_data.reservable_seats[0]],
     )
 
@@ -128,6 +133,7 @@ def instantiate_global_models(time: dict[str, datetime]):
         room=room_data.group_a,
         state=ReservationState.CONFIRMED,
         users=[user_data.user],
+        host_id=user_data.user.id,
         seats=[],
     )
 
@@ -141,8 +147,40 @@ def instantiate_global_models(time: dict[str, datetime]):
         room=room_data.group_a,
         state=ReservationState.CONFIRMED,
         users=[user_data.root],
+        host_id=user_data.root.id,
         seats=[]
     )
+
+    # Editing room reservation
+    reservation_8 = Reservation(
+        id=8,
+        start=operating_hours_data.today.start,
+        end=operating_hours_data.today.start + timedelta(minutes=30),
+        created_at=operating_hours_data.today.start,
+        updated_at=operating_hours_data.today.start,
+        walkin=False,
+        room=room_data.group_a,
+        state=ReservationState.EDIT,
+        users=[user_data.root],
+        host_id=user_data.root.id,
+        seats=[]
+    )
+
+    # Confirmed room reservation
+    reservation_9 = Reservation(
+        id=9,
+        start=operating_hours_data.today.start,
+        end=operating_hours_data.today.start + timedelta(minutes=30),
+        created_at=operating_hours_data.today.start,
+        updated_at=operating_hours_data.today.start,
+        walkin=False,
+        room=room_data.group_a,
+        state=ReservationState.CONFIRMED,
+        users=[user_data.root],
+        host_id=user_data.root.id,
+        seats=[]
+    )
+
 
 
     active_reservations = [reservation_1]
@@ -157,6 +195,8 @@ def instantiate_global_models(time: dict[str, datetime]):
         reservation_5,
         reservation_6,
         reservation_7,
+        reservation_8,
+        reservation_9,
     ]
 
 
@@ -166,6 +206,7 @@ def test_request(overrides: dict | None = None) -> ReservationRequest:
         "start": datetime.now(),
         "end": datetime.now() + THIRTY_MINUTES,
         "users": [UserIdentity(id=user_data.ambassador.id)],
+        "host_id": user_data.ambassador.id,
         "seats": [SeatIdentity(id=seat_data.monitor_seat_01.id)],
     }
 

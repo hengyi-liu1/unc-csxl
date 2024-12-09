@@ -11,6 +11,11 @@
         }}</strong>
       </p>
     </div>
+    <div class="list-item-text">
+      <p class="header-text">
+          # seats: <strong>{{ reservation.room?.capacity }}</strong>
+      </p>
+    </div>
   </div>
 
   <!-- What Section -->
@@ -54,4 +59,19 @@
       }
     </div>
   </div>
+
+  <div class="list-item">
+    <mat-icon>people</mat-icon>
+    <div class="list-item-text">
+      @if (reservation.state === 'DRAFT' || reservation.state === 'EDIT') {
+        <user-lookup [label]="'Members'" [setUsers]="setUsers" (usersChanged)="onUsersChanged($event)" />
+      } @else {
+        <user-chip-list [users]="profileService.profilesToPublicProfiles(reservation.users)" [enableMailTo]="false" [clickable]="false" />
+      }
+      @if (!roomReservationService.halfFillConstraintSatisfied(reservation)) {
+        <p class="error-message">*Please add members to fill at least half of the seats <br />when reserving for more than 30 minutes in advance.</p>
+      }
+    </div>
+  </div>
+  
 </div>
