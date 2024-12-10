@@ -34,32 +34,6 @@
     <coworking-reservation-facts [reservation]="reservation" />
   </mat-card-content>
 
-  <mat-card-content>
-    <div class="reservation-users">
-      <mat-card-title>Members in Reservation:</mat-card-title>
-      <ul *ngIf="(displayedUsers)?.length; else noUsers">
-        <li *ngFor="let user of displayedUsers">
-          <img
-            class="user-image"
-            *ngIf="user.github_avatar"
-            matChipAvatar
-            [src]="user.github_avatar" />
-          {{ user.first_name }} {{ user.last_name }} ({{ user.email }})
-        </li>
-      </ul>
-  
-      <ng-template #noUsers>
-        <p>No users in this reservation.</p>
-      </ng-template>
-    </div>
-  </mat-card-content>
-
-  @if (reservation.seats.length == 0) {
-    <mat-card-content>
-      <user-lookup (usersChanged)="onUsersChanged($event)"/>
-    </mat-card-content>
-  }
-
   <mat-card-actions>
     @switch (reservation.state) { @case ('DRAFT') {
     <button
