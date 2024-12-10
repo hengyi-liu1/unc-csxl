@@ -36,13 +36,11 @@ export interface Seat {
 export interface Room {
   id: string | null;
   nickname: string;
-  capacity: number;
 }
 
 export interface ReservationJSON extends TimeRangeJSON {
   id: number;
   users: Profile[];
-  host_id: number;
   seats: Seat[];
   walkin: boolean;
   created_at: string;
@@ -54,7 +52,6 @@ export interface ReservationJSON extends TimeRangeJSON {
 export interface Reservation extends TimeRange {
   id: number;
   users: Profile[];
-  host_id: number;
   seats: Seat[];
   walkin: boolean;
   created_at: Date;
@@ -116,7 +113,6 @@ export const parseCoworkingStatusJSON = (
 
 export interface ReservationRequest extends TimeRange {
   users: Profile[] | null;
-  host_id: number;
   seats: Seat[] | null;
   room: { id: string };
 }

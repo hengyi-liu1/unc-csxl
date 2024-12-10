@@ -81,60 +81,27 @@ export class CoworkingReservationCard implements OnInit {
       next: () => {
         this.refreshCoworkingHome();
       },
-      // error: (error: Error) => {
-      //   this.snackBar.open(
-      //     'Error: Issue cancelling reservation. Please see CSXL Ambassador for assistance.',
-      //     '',
-      //     { duration: 8000 }
-      //   );
-      //   console.error(error.message);
-      // }
-      error: (error) => {
-          this.snackBar.open(
-            error.error.message,
-            '',
-            { duration: 8000 }
-          );
-          console.error(error.message);
-        }
+      error: (error: Error) => {
+        this.snackBar.open(
+          'Error: Issue cancelling reservation. Please see CSXL Ambassador for assistance.',
+          '',
+          { duration: 8000 }
+        );
+        console.error(error.message);
+      }
     });
   }
 
   confirm() {
-    if (
-      this.roomReservationService.halfFillConstraintSatisfied(this.reservation)
-    ) {
-      this.isConfirmed.emit(true);
-      this.roomReservationService.confirm(this.reservation).subscribe({
-        next: () => {
-          this.refreshCoworkingHome();
-          // this.router.navigateByUrl('/coworking');
-        },
-        error: (error) => {
-          this.snackBar.open(error.error.message, '', { duration: 8000 });
-          console.error(error.message);
-        }
-      });
-    } else {
-      console.log("current reservation.users:", this.reservation.users)
-      this.snackBar.open(
-        "Reservations made for more than 30 minutes in advance must fill at least half of the room's capacity.",
-        '',
-        { duration: 8000 }
-      );
-    }
-  }
-
-  edit() {
-    this.roomReservationService.edit(this.reservation).subscribe({
+    this.isConfirmed.emit(true);
+    this.roomReservationService.confirm(this.reservation).subscribe({
       next: () => {
-        this.router.navigateByUrl(
-          `/coworking/confirm-reservation/${this.reservation.id}`
-        );
+        this.refreshCoworkingHome();
+        // this.router.navigateByUrl('/coworking');
       },
       error: (error: Error) => {
         this.snackBar.open(
-          'Error: Issue cancelling reservation. Please see CSXL Ambassador for assistance.',
+          'Error: Issue confirming reservation. Please see CSXL Ambassador for assistance.',
           '',
           { duration: 8000 }
         );
@@ -205,22 +172,13 @@ export class CoworkingReservationCard implements OnInit {
       5 /* minutes */ * 60 /* seconds */ * 1000; /* milliseconds */
 
     const reservationDraftDeadline = (reservation: Reservation) => {
-      return new Date(reservation.state === 'DRAFT' ? reservation.created_at : reservation.updated_at).getTime() + fiveMinutes;
+      return new Date(reservation.created_at).getTime() + fiveMinutes;
     };
 
     const deadlineString = (deadline: number): string => {
       const now = new Date().getTime();
       const delta = (deadline - now) / 1000; /* milliseconds */
-      if (
-        !this.roomReservationService.halfFillConstraintSatisfied(
-          this.reservation
-        )
-      ) {
-        const minPeopleToAdd =
-          this.roomReservationService.getMininumPeopleToAdd(this.reservation);
-          const action = this.reservation.state === 'DRAFT' ? 'reserve' : 'confirm'
-        return `Please add ${minPeopleToAdd} more ${minPeopleToAdd == 1 ? 'person' : 'people'} to ${action}`;
-      } else if (delta > 60) {
+      if (delta > 60) {
         return `Confirm in ${Math.ceil(delta / 60)} minutes`;
       } else if (delta > 0) {
         return `Confirm in ${Math.ceil(delta)} seconds`;

@@ -160,23 +160,6 @@ def test_change_reservation_confirmed_checkin_room(
     )
     assert True == reservation_svc._change_state(reservation, delta=ReservationState.CHECKED_IN)
 
-def test_change_reservation_edit_confirm(
-reservation_svc: ReservationService,
-):
-    reservation = reservation_svc.change_reservation(
-        user_data.root,
-        ReservationPartial(id=8, state=ReservationState.CONFIRMED),
-    )
-    assert ReservationState.CONFIRMED == reservation.state
-
-def test_change_reservation_confirm_edit(
-reservation_svc: ReservationService,
-):
-    reservation = reservation_svc.change_reservation(
-        user_data.root,
-        ReservationPartial(id=9, state=ReservationState.EDIT),
-    )
-    assert ReservationState.EDIT == reservation.state
 
 def test_change_reservation_change_seats_not_implemented(
     reservation_svc: ReservationService,
@@ -190,16 +173,16 @@ def test_change_reservation_change_seats_not_implemented(
         )
 
 
-def test_change_reservation_change_party(
+def test_change_reservation_change_party_not_implemented(
     reservation_svc: ReservationService,
 ):
     """This test is for 100% coverage but should be replaced with actual tests for when
     changing a reservation and changing its party has logic implemented."""
-    reservation = reservation_svc.change_reservation(
-        user_data.ambassador,
-        ReservationPartial(id=4, users=[user_data.ambassador, user_data.root]),
-    )
-    assert user_data.ambassador in reservation.users and user_data.root in reservation.users
+    with pytest.raises(NotImplementedError):
+        reservation_svc.change_reservation(
+            user_data.ambassador,
+            ReservationPartial(id=4, users=[user_data.root]),
+        )
 
 
 def test_change_reservation_change_start_not_implemented(

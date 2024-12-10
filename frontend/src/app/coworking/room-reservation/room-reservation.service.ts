@@ -25,24 +25,6 @@ export class RoomReservationService extends ReservationService {
     super(http);
   }
 
-  private thirtyMinutesInMillis = 30 * 60 * 1000;
-
-  isReservingMoreThanHalfHourInAdvance(reservation: Reservation): boolean {
-    return reservation.start.getTime() - reservation.created_at.getTime() > this.thirtyMinutesInMillis;
-  }
-
-  hasEnoughPeople(reservation: Reservation): boolean {
-    return reservation.users.length >= Math.ceil(reservation.room?.capacity! / 2);
-  }
-
-  halfFillConstraintSatisfied(reservation: Reservation): boolean {
-    return !this.isReservingMoreThanHalfHourInAdvance(reservation) || this.hasEnoughPeople(reservation);
-  }
-
-  getMininumPeopleToAdd(reservation: Reservation) {
-    return Math.ceil(reservation.room?.capacity! / 2) - reservation.users.length;
-  }
-
   getNumHoursStudyRoomReservations(): Observable<string> {
     return this.http.get<string>('/api/coworking/user-reservations/');
   }

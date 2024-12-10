@@ -78,23 +78,14 @@ export class RoomReservationWidgetComponent {
           slots
         );
       },
-      // (error: Error) => {
-      //   // Handle the error here
-      //   this.snackBar.open(
-      //     'Error fetching reservations',
-      //     'Close',
-      //     this.snackBarOptions
-      //   );
-      //   console.error('Error fetching reservations:', error);
-      // }
-      (error) => {
+      (error: Error) => {
         // Handle the error here
         this.snackBar.open(
-          error.error.message,
+          'Error fetching reservations',
           'Close',
           this.snackBarOptions
         );
-        console.error('Error fetching reservations:', error.error.message);
+        console.error('Error fetching reservations:', error);
       }
     );
   }

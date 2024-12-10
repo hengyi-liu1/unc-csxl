@@ -12,7 +12,6 @@ import {
   ElementRef,
   EventEmitter,
   Input,
-  OnChanges,
   OnInit,
   Output,
   ViewChild
@@ -35,11 +34,10 @@ import { ProfileService, PublicProfile } from 'src/app/profile/profile.service';
   templateUrl: './user-lookup.widget.html',
   styleUrls: ['./user-lookup.widget.css']
 })
-export class UserLookup implements OnInit, OnChanges{
+export class UserLookup implements OnInit {
   @Input() label: string = 'Users';
   @Input() maxSelected: number | null = null;
   @Input() users: PublicProfile[] = [];
-  @Input() setUsers: PublicProfile[] = [];
   @Input() initialUser?: PublicProfile;
   @Input() disabled: boolean | null = false;
 
@@ -63,17 +61,12 @@ export class UserLookup implements OnInit, OnChanges{
   }
 
   ngOnInit() {
-    this.users = this.setUsers;
     if (this.disabled) {
       this.userLookup.disable();
     }
     if (this.initialUser) {
       this.users = [this.initialUser!];
     }
-  }
-
-  ngOnChanges() {
-    this.users = this.setUsers;
   }
 
   /** Handler for selecting an option in the who chip grid. */

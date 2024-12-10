@@ -14,4 +14,3 @@ class RoomPartial(BaseModel):
 
 class Room(RoomPartial):
     nickname: str = ""
-    capacity: int

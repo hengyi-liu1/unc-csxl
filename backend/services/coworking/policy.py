@@ -84,14 +84,6 @@ class PolicyService:
 
     def __init__(self): ...
 
-    def immediate_initial_duration(self, _subject: User) -> timedelta:
-        """When making a reservation that starts immediatly, this sets how long the initial reservation can be."""
-        return timedelta(hours=1)
-
-    def activate_half_fill_constraint_duration(self) -> timedelta:
-        """For reservations that are made more than this much time in advance, reservation members must fill at least half of the room's capacity."""
-        return timedelta(minutes=30)
-
     def walkin_window(self, _subject: User) -> timedelta:
         """How far into the future can walkins be reserved?"""
         return timedelta(minutes=10)

@@ -1,6 +1,5 @@
 """Service that manages reservations in the coworking space."""
 
-import math
 from fastapi import Depends
 from datetime import datetime, timedelta
 from random import random
@@ -162,19 +161,7 @@ class ReservationService:
             datetime.now(), reservations
         )
 
-        result = [reservation.to_model() for reservation in reservations]
-
-        # Fill the room.capacity field for each reservation
-        for reservation_model in result:
-            if reservation_model.room != None:
-                room = (
-                    self._session.query(RoomEntity)
-                    .where(RoomEntity.id == reservation_model.room.id)
-                    .all()
-                )
-                reservation_model.room.capacity = room[0].capacity
-        
-        return result
+        return [reservation.to_model() for reservation in reservations]
 
     def _get_active_reservations_for_user_by_state(
         self,
@@ -372,7 +359,7 @@ class ReservationService:
                 for idx in range(start_idx, end_idx):
                     # Currently only assuming single user.
                     # TODO: If making group reservations, need to change this.
-                    if subject.id in [user.id for user in reservation.users]:
+                    if reservation.users[0].id == subject.id:
                         time_slots_for_room[idx] = RoomState.SUBJECT_RESERVED.value
                     else:
                         if time_slots_for_room[idx] != RoomState.SUBJECT_RESERVED.value:
@@ -632,8 +619,6 @@ class ReservationService:
            the reservation's created at.
         2. Confirmed -> Cancelled following PolicyService#reservation_checkin_timeout() after
             the reservation's start.
-        3. Edit -> Cancelled following PolicyService#reservation_draft_timeout() after
-           the reservation's updated at.
         3. Checked In -> Checked Out following the reservation's end.
 
         Args:
@@ -654,14 +639,6 @@ class ReservationService:
                 < cutoff
             ):
                 reservation.state = ReservationState.CANCELLED
-                dirty = True
-            elif(
-                reservation.state == ReservationState.EDIT
-                and reservation.start
-                + self._policy_svc.reservation_draft_timeout()
-                < cutoff
-            ):
-                reservation.state = ReservationState.CONFIRMED
                 dirty = True
             elif (
                 reservation.state == ReservationState.CONFIRMED
@@ -796,16 +773,11 @@ class ReservationService:
                 * Limit users and seats counts to policy
             * Clean-up / Refactor Implementation
         """
-        # Fetch User entities for all requested in reservation
-        user_entities = (
-            self._session.query(UserEntity)
-            .filter(UserEntity.id.in_([user.id for user in request.users]))
-            .all()
-        )
-        if len(user_entities) == 0:
-            raise ReservationException(
-                "At least one valid user is required to make a reservation."
-            )
+        # For the time being, reservations are limited to one user. As soon as
+        # possible, we'd like to add multi-user reservations so that pairs and teams
+        # can be simplified.
+        if len(request.users) > 1:
+            raise NotImplementedError("Multi-user reservations not yet supproted.")
 
         # Enforce Reservation Draft Permissions
         if subject.id not in [user.id for user in request.users]:
@@ -823,13 +795,10 @@ class ReservationService:
         now = datetime.now()
         start = request.start if request.start >= now else now
 
-        is_immediate = start <= now
         is_walkin = abs(start - now) < self._policy_svc.walkin_window(subject)
 
         # Bound end to policy limits for duration of a reservation
-        if is_immediate:
-            max_length = self._policy_svc.immediate_initial_duration(subject)
-        elif is_walkin:
+        if is_walkin:
             max_length = self._policy_svc.walkin_initial_duration(subject)
         else:
             max_length = self._policy_svc.maximum_initial_reservation_duration(subject)
@@ -839,7 +808,26 @@ class ReservationService:
         # Enforce request range is within bounds of walkin vs. pre-reserved policies
         bounds = TimeRange(start=start, end=end)
 
-        # Check for overlapping reservations for the main user
+        # Check if user has exceeded reservation limit
+        if request.room:
+            if not self._check_user_reservation_duration(request.users[0], bounds):
+                raise ReservationException(
+                    "Oops! Looks like you've reached your weekly study room reservation limit"
+                )
+
+        # Fetch User entities for all requested in reservation
+        user_entities = (
+            self._session.query(UserEntity)
+            .filter(UserEntity.id.in_([user.id for user in request.users]))
+            .all()
+        )
+        if len(user_entities) == 0:
+            raise ReservationException(
+                "At least one valid user is required to make a reservation."
+            )
+
+        # Check for overlapping reservations for a single user
+        # if len(user_entities) == 1:
         conflicts = self._get_active_reservations_for_user(request.users[0], bounds)
         for conflict in conflicts:
             if is_walkin and conflict.walkin:
@@ -855,18 +843,16 @@ class ReservationService:
                     "Users may not have conflicting reservations."
                 )
 
-        # Check if the reservation duration is shorter than the minimum amount of time
-        if bounds.duration() < self._policy_svc.minimum_reservation_duration():
-            raise ReservationException(
-                "Reservations can't be made for less than 10 minutes"
-            )
-
-        # Check if user has exceeded reservation limit
-        if request.room:
-            if not self._check_user_reservation_duration(request.users[0], bounds):
-                raise ReservationException(
-                    "Oops! Looks like you've reached your weekly study room reservation limit"
-                )
+        # Dead code because of the NotImplementedError testing for multiple users at the top
+        # else:
+        #     # Draft of expected functionality (needs testing and sanity checking)
+        #     # Multiple users all need to not have conflicts
+        #     for user in request.users:
+        #         conflicts = self._get_active_reservations_for_user(user, bounds)
+        #         if len(conflicts) > 0:
+        #             raise ReservationException(
+        #                 "Users may not have conflicting reservations."
+        #             )
 
         # Look at the seats - match bounds of assigned seat's availability
         seat_entities = []
@@ -903,7 +889,6 @@ class ReservationService:
             start=bounds.start,
             end=bounds.end,
             users=user_entities,
-            host_id=request.host_id,
             walkin=is_walkin,
             room_id=request.room.id if request.room else None,
             seats=seat_entities,
@@ -940,9 +925,6 @@ class ReservationService:
             raise ResourceNotFoundException(
                 f"Reservation(id={delta.id}) does not exist"
             )
-        
-        # This is true when user is editing reservation. Don't save to database when editing.
-        editing = entity.state == ReservationState.EDIT and delta.state != ReservationState.CONFIRMED
 
         # Either the current user is party to the reservation or an admin has
         # permission to manage reservations for all users.
@@ -954,15 +936,10 @@ class ReservationService:
                     subject, "coworking.reservation.manage", f"user/{user_id}"
                 )
 
-        dirty = False
-
-        # Handle Requested Party Changes
-        if delta.users is not None:
-            dirty = self._change_users(entity, delta.users, editing) or dirty
-
         # Handle Requested State Changes
+        dirty = False
         if delta.state is not None and delta.state != entity.state:
-            dirty = self._change_state(entity, delta.state) or dirty
+            dirty = dirty or self._change_state(entity, delta.state)
             if entity.state == ReservationState.CHECKED_OUT:
                 entity.end = datetime.now()
 
@@ -970,18 +947,17 @@ class ReservationService:
         if delta.seats is not None:
             raise NotImplementedError("Changing seats not yet supported.")
 
+        # Handle Requested Party Changes
+        if delta.users is not None:
+            raise NotImplementedError("Changing party not yet supported.")
+
         # Handle Requested Time Changes (TODO)
         if delta.start is not None or delta.end is not None or delta.seats is not None:
             # TODO: Assure these requested changes are valid within policies
             raise NotImplementedError("Changing start/end not yet supported")
 
-        if dirty and not editing:  # and valid():
+        if dirty:  # and valid():
             self._session.commit()
-            print("Is Saved")
-        else:
-            print("Not Saved")
-            print(dirty)
-            print(editing)
 
         return entity.to_model()
 
@@ -996,11 +972,7 @@ class ReservationService:
                 valid_transition = True
             case (RS.DRAFT, RS.CANCELLED):
                 valid_transition = True
-            case (RS.CONFIRMED, RS.EDIT):
-                valid_transition = True
             case (RS.CONFIRMED, RS.CANCELLED):
-                valid_transition = True
-            case (RS.EDIT, RS.CONFIRMED):
                 valid_transition = True
             case (RS.CHECKED_IN, RS.CHECKED_OUT):
                 valid_transition = True
@@ -1012,83 +984,8 @@ class ReservationService:
                 case (RS.CONFIRMED, RS.CHECKED_IN):
                     valid_transition = True
 
-        if entity.room and valid_transition and delta == RS.CONFIRMED:
-            if entity.start - entity.created_at > self._policy_svc.activate_half_fill_constraint_duration():
-                room = self._session.get(RoomEntity, entity.room.id)
-                if len(entity.users) < math.ceil(room.capacity / 2):
-                    raise ReservationException(
-                        "Reservations made for more than " + 
-                        str(int(self._policy_svc.activate_half_fill_constraint_duration().total_seconds()/60)) + 
-                        " minutes in advance must fill at least half of the room's capacity." + str(len(entity.users)) + " " + str(math.ceil(room.capacity / 2))
-                    )
-
         if valid_transition:
             entity.state = delta
-            print("state changed to: " + str(delta))
-        else:
-            print("state remained: " + str(entity.state))
-
-        return valid_transition
-
-    def _change_users(self, entity: ReservationEntity, delta: list[User], editing: bool) -> bool:
-        valid_transition = False
-
-        if entity.host_id not in [user.id for user in delta]:
-            raise ReservationException(
-                "The host can not be droped from the reservation."
-            )
-        for user in delta:
-            if user.id == entity.host_id:
-                host = user
-                break
-
-        # Bound start
-        now = datetime.now()
-        start = entity.start if entity.start >= now else now
-
-        is_walkin = abs(start - now) < self._policy_svc.walkin_window(
-            host
-        )
-
-        # Bound end to policy limits for duration of a reservation
-        if is_walkin:
-            max_length = self._policy_svc.walkin_initial_duration(
-                host
-            )
-        else:
-            max_length = self._policy_svc.maximum_initial_reservation_duration(
-                host
-            )
-        end_limit = start + max_length
-        end = entity.end if entity.end <= end_limit else end_limit
-
-        # Enforce request range is within bounds of walkin vs. pre-reserved policies
-        bounds = TimeRange(start=start, end=end)
-
-        for user in delta:
-            conflicts = self._get_active_reservations_for_user(user, bounds)
-            conflicts = [reservation for reservation in conflicts if reservation.id != entity.id]
-            if len(conflicts) > 0:
-                raise ReservationException(
-                    user.first_name + " has conflicting reservation."
-                )
-            if entity.room:
-                if not self._check_user_reservation_duration(user, bounds):
-                    raise ReservationException(
-                        user.first_name + " has reached the weekly study room reservation limit."
-                    )
-        
-        # If survived above errors, then it's valid to transit. Except for the following case.
-        valid_transition = True
-
-        if editing:
-            valid_transition = False
-
-        if valid_transition:
-            entity.users = [self._session.get(UserEntity, user.id) for user in delta]
-            print("New Users length: " + str(len(entity.users)))
-        else:
-            print("Users not Changed")
 
         return valid_transition
 

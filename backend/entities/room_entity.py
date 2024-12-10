@@ -40,7 +40,7 @@ class RoomEntity(EntityBase):
 
         Returns:
             Room: The model representation of the entity."""
-        return Room(id=self.id, nickname=self.nickname, capacity=self.capacity)
+        return Room(id=self.id, nickname=self.nickname)
 
     def to_details_model(self) -> RoomDetails:
         """Converts the entity to a RoomDetail model.

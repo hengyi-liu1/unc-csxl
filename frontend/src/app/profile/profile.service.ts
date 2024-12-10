@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, Signal, WritableSignal, signal } from '@angular/core';
-import { firstValueFrom, Observable, ReplaySubject, Subject, tap } from 'rxjs';
+import { Observable, ReplaySubject, Subject, tap } from 'rxjs';
 import { AuthenticationService } from '../authentication.service';
 
 export interface Permission {
@@ -107,40 +107,5 @@ export class ProfileService {
 
   getByOnyen(onyen: string): Observable<PublicProfile> {
     return this.http.get<PublicProfile>(`/api/user/${onyen}`);
-  }
-
-  profileToPublicProfile(profile: Profile): PublicProfile {
-    return {
-      id: profile.id ? profile.id : 0,
-      onyen: profile.onyen,
-      first_name: profile.first_name ? profile.first_name : '',
-      last_name: profile.last_name ? profile.last_name : '',
-      pronouns: profile.pronouns ? profile.pronouns : '',
-      email: profile.email ? profile.email : '',
-      github_avatar: profile.github_avatar,
-      github: profile.github,
-      bio: profile.bio,
-      linkedin: profile.linkedin,
-      website: profile.website
-    };
-  }
-
-  profilesToPublicProfiles(profiles: Profile[]): PublicProfile[] {
-    return profiles.map((value) => this.profileToPublicProfile(value));
-  }
-
-  async publicProfileToProfile(publicProfile: PublicProfile): Promise<Profile> {
-    return (await firstValueFrom(this.search(publicProfile.onyen)))[0];
-  }
-
-  async publicProfilesToProfiles(
-    publicProfiles: PublicProfile[]
-  ): Promise<Profile[]> {
-    const profiles = await Promise.all(
-      publicProfiles.map(async (publicProfile) => {
-        return await this.publicProfileToProfile(publicProfile);
-      })
-    );
-    return profiles;
   }
 }

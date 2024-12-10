@@ -73,34 +73,10 @@
       mat-flat-button
       type="submit"
       class="action-button"
-      (click)="confirm()"
-      [disabled]="!roomReservationService.halfFillConstraintSatisfied(reservation)">
-      {{ draftConfirmationDeadline$ | async }}
-    </button>
-    } @case ('EDIT') {
-      <button
-      mat-flat-button
-      class="tertiary-button"
-      type="submit"
-      (click)="cancel()">
-      Back
-    </button>
-    <button
-      mat-flat-button
-      type="submit"
-      class="action-button"
-      (click)="confirm()"
-      [disabled]="!roomReservationService.halfFillConstraintSatisfied(reservation)">
+      (click)="confirm()">
       {{ draftConfirmationDeadline$ | async }}
     </button>
     } @case ('CONFIRMED') {
-    <button
-      mat-flat-button
-      class="tertiary-button"
-      type="submit"
-      (click)="edit()">
-      Edit
-    </button>
     <button
       mat-flat-button
       class="tertiary-button"

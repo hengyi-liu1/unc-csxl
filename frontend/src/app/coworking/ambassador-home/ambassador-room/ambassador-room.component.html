@@ -12,10 +12,9 @@
         </ng-container>
         <ng-container matColumnDef="name">
           <th mat-header-cell *matHeaderCellDef>Name</th>
-          <td mat-cell *matCellDef="let reservation" class="tabel-cell">
-            @for(user of reservation.users; track user.id) {
-              <p>{{ user.first_name }} {{ user.last_name }}</p>
-            }
+          <td mat-cell *matCellDef="let reservation">
+            {{ reservation.users[0].first_name }}
+            {{ reservation.users[0].last_name }}
           </td>
         </ng-container>
         <ng-container matColumnDef="date">
