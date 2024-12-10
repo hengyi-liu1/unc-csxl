@@ -1092,6 +1092,65 @@ class ReservationService:
 
         return valid_transition
 
+    def _change_users(self, entity: ReservationEntity, delta: list[User], editing: bool) -> bool:
+        valid_transition = False
+
+        if entity.host_id not in [user.id for user in delta]:
+            raise ReservationException(
+                "The host can not be droped from the reservation."
+            )
+        for user in delta:
+            if user.id == entity.host_id:
+                host = user
+                break
+
+        # Bound start
+        now = datetime.now()
+        start = entity.start if entity.start >= now else now
+
+        is_walkin = abs(start - now) < self._policy_svc.walkin_window(
+            host
+        )
+
+        # Bound end to policy limits for duration of a reservation
+        if is_walkin:
+            max_length = self._policy_svc.walkin_initial_duration(
+                host
+            )
+        else:
+            max_length = self._policy_svc.maximum_initial_reservation_duration(
+                host
+            )
+        end_limit = start + max_length
+        end = entity.end if entity.end <= end_limit else end_limit
+
+        # Enforce request range is within bounds of walkin vs. pre-reserved policies
+        bounds = TimeRange(start=start, end=end)
+
+        for user in delta:
+            conflicts = self._get_active_reservations_for_user(user, bounds)
+            conflicts = [reservation for reservation in conflicts if reservation.id != entity.id]
+            if len(conflicts) > 0:
+                raise ReservationException(
+                    user.first_name + " has conflicting reservation."
+                )
+            if entity.room:
+                if not self._check_user_reservation_duration(user, bounds):
+                    raise ReservationException(
+                        user.first_name + " has reached the weekly study room reservation limit."
+                    )
+        
+        # If survived above errors, then it's valid to transit. Except for the following case.
+        valid_transition = True
+
+        if editing:
+            valid_transition = False
+
+        if valid_transition:
+            entity.users = [self._session.get(UserEntity, user.id) for user in delta]
+
+        return valid_transition
+
     def list_all_active_and_upcoming_for_xl(
         self, subject: User
     ) -> Sequence[Reservation]:

@@ -259,7 +259,7 @@ def test_draft_reservation_has_conflict_but_ok(
         user_data.root,
         reservation_data.test_request(
             {
-                "start": time[NOW],
+                "start": time[NOW] + timedelta(minutes=1),
                 "end": conflict.start + THIRTY_MINUTES,
                 "users": [UserIdentity(**user_data.root.model_dump())],
             }
@@ -291,23 +291,6 @@ def test_draft_reservation_permissions(reservation_svc: ReservationService):
     )
 
 
-def test_draft_reservation_multiple_users_not_implemented(
-    reservation_svc: ReservationService,
-):
-    with pytest.raises(NotImplementedError):
-        reservation_svc.draft_reservation(
-            user_data.ambassador,
-            reservation_data.test_request(
-                {
-                    "users": [
-                        UserIdentity(**user_data.root.model_dump()),
-                        UserIdentity(**user_data.ambassador.model_dump()),
-                    ]
-                }
-            ),
-        )
-
-
 def test_draft_reservation_user_did_not_accepted_agreement(
     reservation_svc: ReservationService,
 ):
@@ -336,6 +319,7 @@ def test_draft_reservation_room_time_conflict(
         start=start,
         end=end,
         users=[user_data.ambassador],
+        host_id=user_data.ambassador.id,
     )
     with pytest.raises(ReservationException):
         reservation_svc.draft_reservation(user_data.ambassador, conflict_draft)
@@ -371,6 +355,7 @@ def test_draft_reservation_room_no_time_conflict_before(
         start=start,
         end=end,
         users=[user_data.ambassador],
+        host_id=user_data.ambassador.id,
     )
     reservation = reservation_svc.draft_reservation(
         user_data.ambassador, conflict_draft
@@ -390,6 +375,7 @@ def test_draft_reservation_room_no_time_conflict_after(
         start=start,
         end=end,
         users=[user_data.ambassador],
+        host_id=user_data.ambassador.id,
     )
     reservation = reservation_svc.draft_reservation(
         user_data.ambassador, conflict_draft
@@ -409,6 +395,7 @@ def test_draft_reservation_different_room_time_conflict(
         start=start,
         end=end,
         users=[user_data.ambassador],
+        host_id=user_data.ambassador.id,
     )
     reservation = reservation_svc.draft_reservation(
         user_data.ambassador, conflict_draft
@@ -428,6 +415,7 @@ def test_draft_reservation_crosses_weekly_limit(
         start=operating_hours_data.three_days_from_today.start,
         end=operating_hours_data.three_days_from_today.start + timedelta(hours=2),
         users=[user_data.user],
+        host_id=user_data.user.id,
     )
 
     reservation_svc.draft_reservation(
@@ -440,18 +428,33 @@ def test_draft_reservation_crosses_weekly_limit(
         start=operating_hours_data.three_days_from_today.start + timedelta(hours=2),
         end=operating_hours_data.three_days_from_today.start + timedelta(hours=4),
         users=[user_data.user],
+        host_id=user_data.user.id,
     )
 
     reservation_svc.draft_reservation(
         user_data.user, temp_draft_2
     )
 
-    exceed_limit_draft = ReservationRequest(
+    temp_draft_3 = ReservationRequest(
         seats=[],
         room=room_data.group_a,
         start=operating_hours_data.three_days_from_today.start + timedelta(hours=4),
         end=operating_hours_data.three_days_from_today.start + timedelta(hours=6),
         users=[user_data.user],
+        host_id=user_data.user.id,
+    )
+
+    reservation_svc.draft_reservation(
+        user_data.user, temp_draft_3
+    )
+
+    exceed_limit_draft = ReservationRequest(
+        seats=[],
+        room=room_data.group_a,
+        start=operating_hours_data.three_days_from_today.start + timedelta(hours=6),
+        end=operating_hours_data.three_days_from_today.start + timedelta(hours=8),
+        users=[user_data.user],
+        host_id=user_data.user.id,
     )
 
     with pytest.raises(ReservationException):

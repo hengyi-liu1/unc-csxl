@@ -42,7 +42,6 @@ export class ReservationFactsWidget {
     try {
       const changedUsers =
         await this.profileService.publicProfilesToProfiles(newUsers);
-      console.log("onUsersChanged: ", changedUsers)
 
       const response = await firstValueFrom(
         this.http.put<Reservation>(
@@ -53,7 +52,6 @@ export class ReservationFactsWidget {
           }
         )
       );
-      console.log("Users fron backend: ", response.users)
 
       // Update the reservation users based on the state
       if (this.reservation.state === 'EDIT') {

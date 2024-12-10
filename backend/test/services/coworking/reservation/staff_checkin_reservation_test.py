@@ -74,6 +74,7 @@ def test_staff_checkin_not_found(
         end=time[IN_ONE_HOUR],
         state=ReservationState.CONFIRMED,
         users=[],
+        host_id=0,
         seats=[],
         created_at=time[NOW],
         updated_at=time[NOW],

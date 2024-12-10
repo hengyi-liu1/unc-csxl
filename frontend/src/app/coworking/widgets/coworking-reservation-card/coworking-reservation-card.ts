@@ -116,7 +116,6 @@ export class CoworkingReservationCard implements OnInit {
         }
       });
     } else {
-      console.log("current reservation.users:", this.reservation.users)
       this.snackBar.open(
         "Reservations made for more than 30 minutes in advance must fill at least half of the room's capacity.",
         '',

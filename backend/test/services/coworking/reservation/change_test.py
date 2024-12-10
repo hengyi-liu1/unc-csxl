@@ -156,9 +156,32 @@ def test_change_reservation_confirmed_checkin_room(
         room=group_a,
         state=ReservationState.CONFIRMED,
         users=[user_data.user],
-        seats=[]
+        host_id=user_data.user.id,
+        seats=[],
     )
-    assert True == reservation_svc._change_state(reservation, delta=ReservationState.CHECKED_IN)
+    assert True == reservation_svc._change_state(
+        reservation, delta=ReservationState.CHECKED_IN
+    )
+
+
+def test_change_reservation_edit_confirm(
+    reservation_svc: ReservationService,
+):
+    reservation = reservation_svc.change_reservation(
+        user_data.root,
+        ReservationPartial(id=8, state=ReservationState.CONFIRMED),
+    )
+    assert ReservationState.CONFIRMED == reservation.state
+
+
+def test_change_reservation_confirm_edit(
+    reservation_svc: ReservationService,
+):
+    reservation = reservation_svc.change_reservation(
+        user_data.root,
+        ReservationPartial(id=6, state=ReservationState.EDIT),
+    )
+    assert ReservationState.EDIT == reservation.state
 
 def test_change_reservation_edit_confirm(
 reservation_svc: ReservationService,
@@ -193,13 +216,11 @@ def test_change_reservation_change_seats_not_implemented(
 def test_change_reservation_change_party(
     reservation_svc: ReservationService,
 ):
-    """This test is for 100% coverage but should be replaced with actual tests for when
-    changing a reservation and changing its party has logic implemented."""
     reservation = reservation_svc.change_reservation(
         user_data.ambassador,
-        ReservationPartial(id=4, users=[user_data.ambassador, user_data.root]),
+        ReservationPartial(id=4, users=[user_data.root]),
     )
-    assert user_data.ambassador in reservation.users and user_data.root in reservation.users
+    assert user_data.root in reservation.users
 
 
 def test_change_reservation_change_start_not_implemented(
@@ -230,5 +251,31 @@ def test_change_reservation_change_end_not_implemented(
                 id=4,
                 start=reservation_data.reservation_4.start,
                 end=reservation_data.reservation_4.end + timedelta(minutes=423),
+            ),
+        )
+
+
+def test_change_reservation_drop_host(
+    reservation_svc: ReservationService,
+):
+    with pytest.raises(ReservationException):
+        reservation_svc.change_reservation(
+            user_data.instructor,
+            ReservationPartial(
+                id=8,
+                users=[],
+            ),
+        )
+
+
+def test_change_reservation_half_fill(
+    reservation_svc: ReservationService,
+):
+    with pytest.raises(ReservationException):
+        reservation_svc.change_reservation(
+            user_data.root,
+            ReservationPartial(
+                id=7,
+                users=[user_data.root],
             ),
         )

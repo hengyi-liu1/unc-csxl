@@ -31,7 +31,7 @@ export class ReservationService {
       id: reservation.id,
       state: reservation.state == 'EDIT' ? 'CONFIRMED' : 'CANCELLED'
     };
-    console.log("Cancel Payload: ", payload)
+
     return this.http.put<ReservationJSON>(endpoint, payload).pipe(
       map(parseReservationJSON),
       tap((reservation) => {

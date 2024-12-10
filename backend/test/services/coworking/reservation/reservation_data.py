@@ -34,6 +34,7 @@ reservation_5: Reservation
 reservation_6: Reservation
 # Current room reservation
 reservation_7: Reservation
+# Editing room reservation
 
 # Lists used for access
 active_reservations: list[Reservation]
@@ -44,7 +45,7 @@ reservations: list[Reservation]
 
 
 def instantiate_global_models(time: dict[str, datetime]):
-    global reservation_1, reservation_2, reservation_3, reservation_4, reservation_5, reservation_6, reservation_7
+    global reservation_1, reservation_2, reservation_3, reservation_4, reservation_5, reservation_6, reservation_7, reservation_8
     global active_reservations, reservations, draft_reservations, confirmed_reservations, room_reservations
     reservation_1 = Reservation(
         id=1,
@@ -132,7 +133,8 @@ def instantiate_global_models(time: dict[str, datetime]):
         walkin=False,
         room=room_data.group_a,
         state=ReservationState.CONFIRMED,
-        users=[user_data.user],
+        users=[user_data.user, user_data.student],
+
         host_id=user_data.user.id,
         seats=[],
     )
@@ -161,23 +163,8 @@ def instantiate_global_models(time: dict[str, datetime]):
         walkin=False,
         room=room_data.group_a,
         state=ReservationState.EDIT,
-        users=[user_data.root],
-        host_id=user_data.root.id,
-        seats=[]
-    )
-
-    # Confirmed room reservation
-    reservation_9 = Reservation(
-        id=9,
-        start=operating_hours_data.today.start,
-        end=operating_hours_data.today.start + timedelta(minutes=30),
-        created_at=operating_hours_data.today.start,
-        updated_at=operating_hours_data.today.start,
-        walkin=False,
-        room=room_data.group_a,
-        state=ReservationState.CONFIRMED,
-        users=[user_data.root],
-        host_id=user_data.root.id,
+        users=[user_data.instructor, user_data.uta],
+        host_id=user_data.instructor.id,
         seats=[]
     )
 
@@ -196,7 +183,6 @@ def instantiate_global_models(time: dict[str, datetime]):
         reservation_6,
         reservation_7,
         reservation_8,
-        reservation_9,
     ]
 
 
