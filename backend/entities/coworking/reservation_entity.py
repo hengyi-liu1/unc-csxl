@@ -29,6 +29,7 @@ class ReservationEntity(EntityBase):
     state: Mapped[ReservationState] = mapped_column(String, nullable=False)
     walkin: Mapped[bool] = mapped_column(Boolean, nullable=False)
     room_id: Mapped[str] = mapped_column(String, ForeignKey("room.id"), nullable=True)
+    host_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.now, nullable=False
     )
@@ -60,6 +61,7 @@ class ReservationEntity(EntityBase):
             end=self.end,
             state=self.state,
             users=[user.to_model() for user in self.users],
+            host_id=self.host_id,
             seats=[seat.to_model() for seat in self.seats],
             walkin=self.walkin,
             room=self.room.to_model() if self.room else None,
@@ -89,6 +91,7 @@ class ReservationEntity(EntityBase):
                 if session
                 else []
             ),
+            host_id=model.host_id,
             seats=(
                 [session.get(SeatEntity, seat.id) for seat in model.seats]
                 if session

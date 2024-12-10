@@ -15,6 +15,7 @@ __license__ = "MIT"
 class ReservationState(str, Enum):
     DRAFT = "DRAFT"
     CONFIRMED = "CONFIRMED"
+    EDIT = "EDIT"
     CHECKED_IN = "CHECKED_IN"
     CHECKED_OUT = "CHECKED_OUT"
     CANCELLED = "CANCELLED"
@@ -26,6 +27,7 @@ class ReservationIdentity(BaseModel):
 
 class ReservationRequest(TimeRange):
     users: list[UserIdentity] = []
+    host_id: int
     seats: list[SeatIdentity] = []
     room: RoomPartial | None = None
 
@@ -38,6 +40,7 @@ class ReservationOverview(TimeRange):
 class Reservation(ReservationIdentity, TimeRange):
     state: ReservationState
     users: list[User] = []
+    host_id: int
     seats: list[Seat] = []
     room: Room | None = None
     walkin: bool = False
@@ -59,6 +62,7 @@ class ReservationPartial(Reservation, BaseModel):
     end: datetime | None = None
     state: ReservationState | None = None
     users: list[User] | None = None
+    host_id : int | None = None
     seats: list[Seat] | None = None
     room: Room | None = None
     walkin: bool | None = None

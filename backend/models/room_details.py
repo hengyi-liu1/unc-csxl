@@ -31,4 +31,4 @@ class RoomDetails(Room):
 
         Returns:
             Room: The model representation of the entity."""
-        return Room(id=self.id, nickname=self.nickname)
+        return Room(id=self.id, nickname=self.nickname, capacity=self.capacity)
