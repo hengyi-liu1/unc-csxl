@@ -29,6 +29,16 @@ export class ReservationFactsWidget {
     );
   }
 
+  getHalfFillWarning(): string {
+    const minPeopleToAdd = this.roomReservationService.getMininumPeopleToAdd(
+      this.reservation
+    );
+    const action = this.reservation.state === 'DRAFT' ? 'reserve' : 'confirm';
+    return `* Please add ${minPeopleToAdd} more ${
+      minPeopleToAdd == 1 ? 'person' : 'people'
+    } to ${action}`;
+  }
+
   checkinDeadline(reservationStart: Date, reservationEnd: Date): Date {
     return new Date(
       Math.min(

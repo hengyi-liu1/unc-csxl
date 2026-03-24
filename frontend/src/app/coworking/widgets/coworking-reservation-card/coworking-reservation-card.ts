@@ -210,16 +210,7 @@ export class CoworkingReservationCard implements OnInit {
     const deadlineString = (deadline: number): string => {
       const now = new Date().getTime();
       const delta = (deadline - now) / 1000; /* milliseconds */
-      if (
-        !this.roomReservationService.halfFillConstraintSatisfied(
-          this.reservation
-        )
-      ) {
-        const minPeopleToAdd =
-          this.roomReservationService.getMininumPeopleToAdd(this.reservation);
-          const action = this.reservation.state === 'DRAFT' ? 'reserve' : 'confirm'
-        return `Please add ${minPeopleToAdd} more ${minPeopleToAdd == 1 ? 'person' : 'people'} to ${action}`;
-      } else if (delta > 60) {
+      if (delta > 60) {
         return `Confirm in ${Math.ceil(delta / 60)} minutes`;
       } else if (delta > 0) {
         return `Confirm in ${Math.ceil(delta)} seconds`;

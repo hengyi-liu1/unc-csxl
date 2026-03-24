@@ -74,7 +74,7 @@
       </div>
     </div>
     @if (!roomReservationService.halfFillConstraintSatisfied(reservation)) {
-          <p class="error-message">*Please add members to fill at least half of the seats <br />when reserving for more than 30 minutes in advance.</p>
+          <p class="error-message">{{ getHalfFillWarning() }}</p>
         }
   }
 </div>

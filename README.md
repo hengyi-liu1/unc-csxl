@@ -1,17 +1,35 @@
-# Computer Science Experience Labs
+# Room Reservation System on UNC CS Website
 
-The Experience Labs' (XL) mission is to accelerate technical experience and build community among undergraduate CS majors at The University of North Carolina at Chapel Hill. The XL's web app, found in production at `csxl.unc.edu`, is backed by this repository.
+This branch implements a full-stack room reservation system on UNC Computer Science Experience Labs website.
 
-* [Get Started with a Development Environment](docs/get_started.md)
+## Highlights
 
-## Developer Docs
+- Designed the front-end reservation interface, consistent with the project's Google style.
+- Implemented back-end reservation and validation logic, fixed compatibility issue with legacy code.
+- Integrated database storage using SQLAlchemy, preserving reservation details, even for temporary drafts.
 
-* [Branch, Pull Request, and Code Review Practices](docs/branches.md)
-* [Database Concerns](docs/database.md)
-* [Authentication, Authorization, and Permissions](docs/auth.md)
-* [Testing Tools](docs/testing.md)
-* [Debugging Tools](docs/debugging.md)
+## Demo
 
-## Feature Docs
+Demo video:
 
-* [Github Integration](docs/github_integration.md)
+[![Short demo video](https://img.youtube.com/vi/WQYFdv-ymAI/0.jpg)](https://youtube.com/watch?v=WQYFdv-ymAI)
+
+## Technical Skills
+
+- Python, TypeScript
+- Angular, Express
+- SQLAlchemy, PostgreSQL
+- Git, Docker
+- Agile Workflow
+
+## Main Content
+
+- [My commit](https://github.com/hengyi-liu1/unc-csxl/commit/96a6d64248c9433268b967d74da0453688e4bfdd) – The full-stack room reservation implementation
+
+## How to Run
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/hengyi-liu1/unc-csxl.git
+   ```
+2. Follow the instructions in `get_started.md` under `docs` folder to set up this project
